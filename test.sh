@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 IMAGE="model-server:latest"
 PORT=8000
@@ -8,8 +8,8 @@ CONTAINER=""
 PASS=0
 FAIL=0
 
-pass() { echo "  ✅ PASS: $1"; ((PASS++)); }
-fail() { echo "  ❌ FAIL: $1"; ((FAIL++)); }
+pass() { echo "  ✅ PASS: $1"; PASS=$((PASS+1)); }
+fail() { echo "  ❌ FAIL: $1"; FAIL=$((FAIL+1)); }
 
 wait_ready() {
     local max=90
@@ -22,7 +22,7 @@ wait_ready() {
             return 0
         fi
         sleep 1
-        ((i++))
+        i=$((i+1))
     done
     echo "  ❌ Timed out waiting for ready"
     return 1
@@ -122,23 +122,6 @@ test_invalid_profile() {
     fi
 }
 
-print_summary() {
-    echo ""
-    echo "============================================================"
-    echo " Test Summary"
-    echo "============================================================"
-    echo "  Passed: $PASS"
-    echo "  Failed: $FAIL"
-    echo ""
-    if [ "$FAIL" -eq 0 ]; then
-        echo "  🎉 All tests passed!"
-        exit 0
-    else
-        echo "  ⚠️  Some tests failed."
-        exit 1
-    fi
-}
-
 echo "============================================================"
 echo " Building image: $IMAGE"
 echo "============================================================"
@@ -149,4 +132,18 @@ for profile in balanced throughput latency; do
 done
 
 test_invalid_profile
-print_summary
+
+echo ""
+echo "============================================================"
+echo " Test Summary"
+echo "============================================================"
+echo "  Passed: $PASS"
+echo "  Failed: $FAIL"
+echo ""
+if [ "$FAIL" -eq 0 ]; then
+    echo "  🎉 All tests passed!"
+    exit 0
+else
+    echo "  ⚠️  Some tests failed."
+    exit 1
+fi
